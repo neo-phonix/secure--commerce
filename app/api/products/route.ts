@@ -12,10 +12,20 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from('products')
-    .select('*');
+    .select(`
+      *,
+      categories (
+        name
+      )
+    `);
 
   if (category && category !== 'All') {
-    query = query.eq('category', category);
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category);
+    if (isUuid) {
+      query = query.eq('category_id', category);
+    } else {
+      query = query.eq('categories.name', category);
+    }
   }
 
   if (search) {
@@ -38,5 +48,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  // Map the data to include category name at the top level
+  const products = data?.map((p: any) => ({
+    ...p,
+    category: p.categories?.name || 'Uncategorized'
+  }));
+
+  return NextResponse.json(products);
 }

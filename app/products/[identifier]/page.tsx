@@ -91,10 +91,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ identi
           <Link href="/" className="hover:text-primary transition-colors">Home</Link>
           <ChevronRight className="w-3 h-3" />
           <Link href="/products" className="hover:text-primary transition-colors">Products</Link>
-          {product.categories?.name && (
+          {product.category && (
             <>
               <ChevronRight className="w-3 h-3" />
-              <span className="text-slate-400">{product.categories.name}</span>
+              <span className="text-slate-400">{product.category}</span>
             </>
           )}
           <ChevronRight className="w-3 h-3" />
@@ -138,7 +138,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ identi
             <div className="mb-8">
               <div className="flex items-center gap-4 mb-4">
                 <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest rounded-full border border-primary/20">
-                  {product.categories?.name || 'Premium'}
+                  {product.category || 'Premium'}
                 </span>
                 <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((i) => (

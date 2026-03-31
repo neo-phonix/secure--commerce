@@ -89,8 +89,16 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (productError || !product) {
-      console.error('Cart POST: Product not found:', validated.productId, productError);
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      console.error('Cart POST: Product not found or error:', {
+        productId: validated.productId,
+        error: productError,
+        data: product
+      });
+      return NextResponse.json({ 
+        error: productError ? `Database error: ${productError.message}` : 'Product not found',
+        productId: validated.productId,
+        details: productError
+      }, { status: 404 });
     }
 
     if (product.stock_quantity < validated.quantity) {

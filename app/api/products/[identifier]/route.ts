@@ -51,7 +51,13 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch product' }, { status: 500 });
     }
 
-    return NextResponse.json(product);
+    // Map the data to include category name at the top level
+    const mappedProduct = {
+      ...product,
+      category: product.categories?.name || 'Uncategorized'
+    };
+
+    return NextResponse.json(mappedProduct);
   } catch (error: any) {
     console.error('Product fetch failed:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

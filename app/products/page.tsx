@@ -5,7 +5,12 @@ export default async function ProductsPage() {
   const supabase = await createClient();
   const { data: products, error } = await supabase
     .from('products')
-    .select('*')
+    .select(`
+      *,
+      categories (
+        name
+      )
+    `)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -17,5 +22,10 @@ export default async function ProductsPage() {
     );
   }
 
-  return <ProductsClient initialProducts={products || []} />;
+  const mappedProducts = (products || []).map((p: any) => ({
+    ...p,
+    category: p.categories?.name || 'Uncategorized'
+  }));
+
+  return <ProductsClient initialProducts={mappedProducts} />;
 }

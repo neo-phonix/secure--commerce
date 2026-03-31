@@ -40,17 +40,13 @@ export default function Home() {
     async function fetchData() {
       try {
         const [productsRes, categoriesRes] = await Promise.all([
-          supabase
-            .from('products')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(8),
+          fetch('/api/products?limit=8').then(res => res.json()),
           supabase
             .from('categories')
             .select('*')
         ]);
 
-        if (productsRes.data) setFeaturedProducts(productsRes.data as Product[]);
+        if (productsRes) setFeaturedProducts(productsRes as Product[]);
         
         if (categoriesRes.data) {
           const categoriesWithCounts = await Promise.all(
@@ -58,7 +54,7 @@ export default function Home() {
               const { count } = await supabase
                 .from('products')
                 .select('*', { count: 'exact', head: true })
-                .eq('category', category.name);
+                .eq('category_id', category.id);
 
               return {
                 ...category,
