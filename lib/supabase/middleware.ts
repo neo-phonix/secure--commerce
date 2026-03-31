@@ -26,7 +26,7 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) => {
             supabaseResponse.cookies.set(name, value, {
               ...options,
-              // Do not hardcode httpOnly: true, as Supabase needs to read some cookies on the client
+              httpOnly: false, // Explicitly allow client-side access
               secure: isProd,
               sameSite: isProd ? 'none' : 'lax',
             })

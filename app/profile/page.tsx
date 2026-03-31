@@ -5,13 +5,14 @@ import { useAuth } from '@/context/auth-context';
 import { motion } from 'motion/react';
 import { User, Mail, Phone, MapPin, Shield, Calendar, Edit2, Save, X, Camera, Lock } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Spinner } from '@/components/ui/spinner';
 
 import { handleFirestoreError, OperationType } from '@/lib/error-handler';
 
 export default function ProfilePage() {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, loading: authLoading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState({
@@ -30,7 +31,7 @@ export default function ProfilePage() {
         avatar_url: user.user_metadata?.avatar_url || ''
       });
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   const handleUpdateProfile = async () => {
     setLoading(true);
@@ -56,7 +57,28 @@ export default function ProfilePage() {
     }
   };
 
-  if (!user) return null;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Spinner size={32} />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4 text-center">
+        <h1 className="text-2xl font-bold mb-4">You are not logged in</h1>
+        <p className="text-black/40 mb-8">Please sign in to view your profile.</p>
+        <Link 
+          href="/login"
+          className="px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-black/80 transition-all"
+        >
+          Sign In
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-12">

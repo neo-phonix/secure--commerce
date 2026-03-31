@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { toast } from 'react-hot-toast';
@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.error('Error fetching user:', error);
           }
         } else {
-          console.log('AuthProvider: Initial user found:', user.email);
+          console.log('AuthProvider: Initial user found:', user?.email);
           setUser(user);
           // Get session for state consistency
           const { data: { session } } = await supabase.auth.getSession();

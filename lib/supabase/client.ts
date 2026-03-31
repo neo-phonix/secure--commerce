@@ -11,7 +11,8 @@ export const createClient = () =>
           const cookie = document.cookie
             .split('; ')
             .find((row) => row.startsWith(`${name}=`));
-          return cookie ? cookie.split('=')[1] : undefined;
+          if (!cookie) return undefined;
+          return decodeURIComponent(cookie.substring(name.length + 1));
         },
         set(name, value, options) {
           if (typeof document === 'undefined') return;
