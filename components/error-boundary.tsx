@@ -8,6 +8,7 @@ interface Props {
 
 interface State {
   hasError: boolean;
+  error?: Error;
 }
 
 class ErrorBoundary extends Component<Props, State> {
@@ -15,8 +16,8 @@ class ErrorBoundary extends Component<Props, State> {
     hasError: false
   };
 
-  public static getDerivedStateFromError(_: Error): State {
-    return { hasError: true };
+  public static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -34,9 +35,21 @@ class ErrorBoundary extends Component<Props, State> {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Something went wrong</h1>
-            <p className="text-slate-500 dark:text-slate-400 mb-8">
-              We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.
+            <p className="text-slate-500 dark:text-slate-400 mb-4">
+              We encountered an unexpected error.
             </p>
+            {this.state.error && (
+              <div className="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl mb-8 text-left overflow-auto max-h-40">
+                <p className="text-xs font-mono text-red-600 dark:text-red-400">
+                  {this.state.error.message}
+                </p>
+                {this.state.error.stack && (
+                  <pre className="text-[10px] text-red-400 dark:text-red-500 mt-2">
+                    {this.state.error.stack}
+                  </pre>
+                )}
+              </div>
+            )}
             <button
               onClick={() => window.location.reload()}
               className="w-full py-3 px-6 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-colors shadow-lg shadow-emerald-500/20"

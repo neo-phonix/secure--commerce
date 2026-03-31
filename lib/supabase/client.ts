@@ -17,8 +17,13 @@ export const createClient = () =>
         set(name, value, options) {
           if (typeof document === 'undefined') return;
           const isProd = process.env.NODE_ENV === 'production';
-          let cookie = `${name}=${value}; path=/; max-age=${options.maxAge}; sameSite=${isProd ? 'none' : 'lax'}`;
-          if (isProd || options.secure) cookie += '; secure';
+          let cookie = `${name}=${value}; path=/; sameSite=${isProd ? 'none' : 'lax'}`;
+          if (options.maxAge !== undefined) {
+            cookie += `; max-age=${options.maxAge}`;
+          }
+          if (isProd || options.secure) {
+            cookie += '; secure';
+          }
           document.cookie = cookie;
         },
         remove(name) {

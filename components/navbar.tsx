@@ -244,7 +244,7 @@ export default function Navbar() {
                   className="hidden sm:flex items-center space-x-2 p-1 pr-3 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                 >
                   <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-xs">
-                    {user.email?.[0].toUpperCase()}
+                    {user.email?.[0]?.toUpperCase() || 'U'}
                   </div>
                   <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{t.nav.profile}</span>
                 </Link>
