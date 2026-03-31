@@ -1,0 +1,5 @@
+{
+  "name": "SecureCommerce",
+  "description": "A high-security e-commerce platform built with Next.js and Supabase, implementing OWASP Top 10 best practices and defense-in-depth security.",
+  "requestFramePermissions": []
+}

@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "A secure hardware asset available for purchase",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "image_url": { "type": "string" },
+        "stock_quantity": { "type": "integer" },
+        "category_id": { "type": "string" },
+        "slug": { "type": "string" },
+        "rating": { "type": "number" }
+      },
+      "required": ["id", "name", "price", "slug"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "A customer purchase record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "total_amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "paid", "shipped", "delivered", "cancelled"] },
+        "razorpay_order_id": { "type": "string" },
+        "razorpay_payment_id": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "user_id", "total_amount", "status"]
+    },
+    "AuditLog": {
+      "title": "Audit Log",
+      "description": "A record of security-sensitive actions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "user_id": { "type": "string" },
+        "details": { "type": "object" },
+        "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "ip_address": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "type", "severity", "created_at"]
+    }
+  }
+}
