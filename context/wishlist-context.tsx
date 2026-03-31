@@ -45,7 +45,12 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch('/api/wishlist');
       if (res.ok) {
         const data = await res.json();
-        setItems(data);
+        if (Array.isArray(data)) {
+          setItems(data);
+        } else if (data && typeof data === 'object' && Array.isArray(data.wishlist)) {
+          // Fallback in case it's still wrapped
+          setItems(data.wishlist);
+        }
       }
     } catch (e) {
       console.error('Failed to fetch wishlist', e);
@@ -60,7 +65,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch('/api/wishlist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ product_id: product.id }),
+          body: JSON.stringify({ productId: product.id }),
         });
         if (res.ok) {
           fetchWishlist();
@@ -84,7 +89,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const removeItem = async (productId: string) => {
     if (user) {
       try {
-        const res = await fetch(`/api/wishlist/${productId}`, {
+        const res = await fetch(`/api/wishlist?productId=${productId}`, {
           method: 'DELETE',
         });
         if (res.ok) {
@@ -105,7 +110,8 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   };
 
   const isInWishlist = (productId: string) => {
-    return items.some((item) => item.product_id === productId);
+    if (!Array.isArray(items)) return false;
+    return items.some((item) => item?.product_id === productId || item?.id === productId);
   };
 
   return (

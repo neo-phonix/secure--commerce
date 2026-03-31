@@ -26,8 +26,11 @@ export async function GET() {
 
     if (error) throw error;
 
-    const formattedWishlist = wishlist.map((item: any) => item.products);
-    return NextResponse.json({ wishlist: formattedWishlist });
+    const formattedWishlist = wishlist.map((item: any) => ({
+      ...item.products,
+      product_id: item.product_id,
+    }));
+    return NextResponse.json(formattedWishlist);
   } catch (error) {
     console.error('Wishlist fetch error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

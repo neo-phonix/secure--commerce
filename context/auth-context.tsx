@@ -28,18 +28,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const setData = async () => {
       try {
-        console.log('AuthProvider: Fetching initial user and session...');
         const {
           data: { user },
           error,
         } = await supabase.auth.getUser();
 
         if (error) {
-          console.error('AuthProvider: Error getting user:', error.message);
           setUser(null);
           setSession(null);
         } else if (user) {
-          console.log('AuthProvider: Initial user found:', user.email);
           setUser(user);
 
           const {
@@ -47,7 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } = await supabase.auth.getSession();
           setSession(session ?? null);
         } else {
-          console.log('AuthProvider: No initial user found');
           setUser(null);
           setSession(null);
         }
@@ -74,10 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (newSession?: Session | null) => {
     setLoading(true);
     try {
-      console.log('AuthContext: login() called, refreshing state...');
-      
       if (newSession) {
-        console.log('AuthContext: Establishing session from provided data...');
         const { data, error } = await supabase.auth.setSession({
           access_token: newSession.access_token,
           refresh_token: newSession.refresh_token,
@@ -86,7 +79,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) {
           console.error('AuthContext: Error setting session:', error.message);
         } else {
-          console.log('AuthContext: Session established successfully');
           setUser(data.user);
           setSession(data.session);
           return;
@@ -95,8 +87,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { data: { user } } = await supabase.auth.getUser();
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('AuthContext: login() refreshed user:', !!user);
-      console.log('AuthContext: login() refreshed session:', !!session);
       setUser(user);
       setSession(session);
     } catch (e) {
