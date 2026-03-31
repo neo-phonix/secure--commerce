@@ -12,7 +12,7 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
-  login: () => Promise<void>;
+  login: (session?: Session | null) => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -28,8 +28,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const setData = async () => {
       try {
+        console.log('AuthProvider: Fetching initial user and session...');
         const { data: { user }, error } = await supabase.auth.getUser();
         if (error) {
+          console.log('AuthProvider: getUser error:', error.message);
           // If error is related to session not found, it's fine
           if (error.message.includes('Auth session missing')) {
             setUser(null);
@@ -38,9 +40,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.error('Error fetching user:', error);
           }
         } else {
+          console.log('AuthProvider: Initial user found:', user.email);
           setUser(user);
           // Get session for state consistency
           const { data: { session } } = await supabase.auth.getSession();
+          console.log('AuthProvider: Initial session found:', !!session);
           setSession(session);
         }
       } catch (e) {
@@ -50,7 +54,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('AuthProvider: onAuthStateChange event:', event);
+      console.log('AuthProvider: onAuthStateChange session:', !!session);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -63,11 +69,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [supabase.auth]);
 
-  const login = async () => {
+  const login = async (newSession?: Session | null) => {
     setLoading(true);
     try {
+      console.log('AuthContext: login() called, refreshing state...');
+      
+      if (newSession) {
+        console.log('AuthContext: Establishing session from provided data...');
+        const { data, error } = await supabase.auth.setSession({
+          access_token: newSession.access_token,
+          refresh_token: newSession.refresh_token,
+        });
+        
+        if (error) {
+          console.error('AuthContext: Error setting session:', error.message);
+        } else {
+          console.log('AuthContext: Session established successfully');
+          setUser(data.user);
+          setSession(data.session);
+          return;
+        }
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('AuthContext: login() refreshed user:', !!user);
+      console.log('AuthContext: login() refreshed session:', !!session);
       setUser(user);
       setSession(session);
     } catch (e) {

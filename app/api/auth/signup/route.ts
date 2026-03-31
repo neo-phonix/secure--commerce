@@ -70,7 +70,8 @@ export async function POST(request: Request) {
     if (data.session) {
       return NextResponse.json({ 
         message: 'User created and logged in successfully', 
-        user: data.user 
+        user: data.user,
+        session: data.session
       }, { status: 201 });
     }
 

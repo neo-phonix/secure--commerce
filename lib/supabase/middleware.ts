@@ -26,7 +26,7 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) => {
             supabaseResponse.cookies.set(name, value, {
               ...options,
-              httpOnly: true,
+              // Do not hardcode httpOnly: true, as Supabase needs to read some cookies on the client
               secure: isProd,
               sameSite: isProd ? 'none' : 'lax',
             })
@@ -68,7 +68,7 @@ export async function updateSession(request: NextRequest) {
       // Update last activity
       supabaseResponse.cookies.set('last_activity', now.toString(), {
         path: '/',
-        httpOnly: true,
+        httpOnly: true, // This one is fine to be httpOnly as it's our own
         secure: isProd,
         sameSite: isProd ? 'none' : 'lax',
         maxAge: 60 * 60 // 1 hour

@@ -46,10 +46,24 @@ export default function Login() {
       }
 
       if (res.ok) {
+        console.log('Login API call successful, calling AuthContext.login()...');
         // AuthContext.login() will refresh the user and session from Supabase cookies
-        await login();
-        toast.success(t.auth.login.success);
-        router.push(returnTo);
+        await login(data.session);
+        
+        // Verification step: check if we actually have a user now
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        console.log('User after login():', user);
+
+        if (user) {
+          toast.success(t.auth.login.success);
+          router.push(returnTo);
+        } else {
+          console.error('Login appeared successful but no user found in session');
+          toast.error('Authentication failed: Session could not be established.');
+        }
       } else {
         if (data.locked) {
           setLockoutInfo({ locked: true, until: data.until });

@@ -118,18 +118,20 @@ export async function middleware(request: NextRequest) {
     
     // Copy all headers from the supabase response to the new response
     // We must use append for Set-Cookie to preserve multiple cookies
+    const setCookies = response.headers.getSetCookie();
+    
     response.headers.forEach((value, key) => {
-      if (key.toLowerCase() === 'set-cookie') {
-        // In Next.js, getSetCookie() is available on Headers
-        const cookies = response.headers.getSetCookie()
-        nextResponse.headers.delete('set-cookie') // Clear any default ones
-        cookies.forEach(cookie => {
-          nextResponse.headers.append('set-cookie', cookie)
-        })
-      } else {
+      if (key.toLowerCase() !== 'set-cookie') {
         nextResponse.headers.set(key, value)
       }
     })
+    
+    if (setCookies.length > 0) {
+      nextResponse.headers.delete('set-cookie')
+      setCookies.forEach(cookie => {
+        nextResponse.headers.append('set-cookie', cookie)
+      })
+    }
     
     response = nextResponse
   }

@@ -18,7 +18,7 @@ export const createClient = async () => {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, {
                 ...options,
-                httpOnly: true,
+                // Do not hardcode httpOnly: true, as Supabase needs to read some cookies on the client
                 secure: isProd,
                 sameSite: isProd ? 'none' : 'lax',
               })

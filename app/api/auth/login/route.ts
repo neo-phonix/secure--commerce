@@ -74,7 +74,11 @@ export async function POST(request: Request) {
     const { logAction } = await import('@/lib/audit');
     await logAction('login', 'user', data.user.id);
 
-    return NextResponse.json({ message: 'Logged in successfully', user: data.user });
+    return NextResponse.json({ 
+      message: 'Logged in successfully', 
+      user: data.user,
+      session: data.session 
+    });
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
