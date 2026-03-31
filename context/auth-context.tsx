@@ -29,23 +29,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const setData = async () => {
       try {
         console.log('AuthProvider: Fetching initial user and session...');
-        const { data: { user }, error } = await supabase.auth.getUser();
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
+
         if (error) {
-          console.log('AuthProvider: getUser error:', error.message);
-          // If error is related to session not found, it's fine
-          if (error.message.includes('Auth session missing')) {
-            setUser(null);
-            setSession(null);
-          } else {
-            console.error('Error fetching user:', error);
-          }
-        } else {
-          console.log('AuthProvider: Initial user found:', user?.email);
+          console.error('AuthProvider: Error getting user:', error.message);
+          setUser(null);
+          setSession(null);
+        } else if (user) {
+          console.log('AuthProvider: Initial user found:', user.email);
           setUser(user);
-          // Get session for state consistency
-          const { data: { session } } = await supabase.auth.getSession();
-          console.log('AuthProvider: Initial session found:', !!session);
-          setSession(session);
+
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          setSession(session ?? null);
+        } else {
+          console.log('AuthProvider: No initial user found');
+          setUser(null);
+          setSession(null);
         }
       } catch (e) {
         console.error('Unexpected error in AuthProvider:', e);
