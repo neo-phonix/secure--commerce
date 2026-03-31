@@ -61,9 +61,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    console.log('Cart POST User:', user?.id, userError);
 
     if (!user) {
+      console.error('Cart POST: Unauthorized:', userError);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -75,7 +77,9 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+    console.log('Cart POST Body:', body);
     const validated = addToCartSchema.parse(body);
+    console.log('Cart POST Validated:', validated);
 
     // Check if product exists and has stock
     const { data: product, error: productError } = await supabase
@@ -85,6 +89,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (productError || !product) {
+      console.error('Cart POST: Product not found:', validated.productId, productError);
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
@@ -93,12 +98,19 @@ export async function POST(req: NextRequest) {
     }
 
     // Use upsert-like logic: check if item already in cart
-    const { data: existingItem } = await supabase
+    console.log('Checking existing item for user:', user.id, 'product:', validated.productId);
+    const { data: existingItem, error: existingItemError } = await supabase
       .from('cart_items')
       .select('id, quantity')
       .eq('user_id', user.id)
       .eq('product_id', validated.productId)
-      .single();
+      .maybeSingle();
+
+    if (existingItemError) {
+      console.error('Error checking existing cart item:', existingItemError);
+      throw existingItemError;
+    }
+    console.log('Existing item found:', existingItem);
 
     if (existingItem) {
       const newQuantity = existingItem.quantity + validated.quantity;
@@ -108,13 +120,19 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Insufficient stock' }, { status: 400 });
       }
 
+      console.log('Updating existing item:', existingItem.id, 'to new quantity:', newQuantity);
       const { error: updateError } = await supabase
         .from('cart_items')
         .update({ quantity: newQuantity, updated_at: new Date().toISOString() })
         .eq('id', existingItem.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating cart item:', updateError);
+        throw updateError;
+      }
+      console.log('Update successful');
     } else {
+      console.log('Inserting new item for user:', user.id, 'product:', validated.productId);
       const { error: insertError } = await supabase
         .from('cart_items')
         .insert({
@@ -123,16 +141,23 @@ export async function POST(req: NextRequest) {
           quantity: validated.quantity,
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Error inserting cart item:', insertError);
+        throw insertError;
+      }
+      console.log('Insert successful');
     }
 
     return NextResponse.json({ message: 'Item added to cart' });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid input', details: error.issues }, { status: 400 });
     }
     console.error('Cart POST Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ 
+      error: error instanceof Error ? error.message : 'Internal Server Error',
+      details: error
+    }, { status: 500 });
   }
 }
 

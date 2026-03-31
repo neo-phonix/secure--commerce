@@ -92,9 +92,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         toast.success(`Added ${product.name} to cart`);
         await fetchCart();
       } else {
+        console.error('CartContext: Failed to add item:', data);
         toast.error(data.error || 'Failed to add item');
       }
     } catch (e) {
+      console.error('CartContext: Error adding item:', e);
       toast.error('Something went wrong');
     } finally {
       setLoading(false);
