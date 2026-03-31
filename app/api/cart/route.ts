@@ -84,9 +84,20 @@ export async function POST(req: NextRequest) {
     // Check if product exists and has stock
     const { data: product, error: productError } = await supabase
       .from('products')
-      .select('id, name, stock_quantity')
+      .select('*')
       .eq('id', validated.productId)
       .single();
+
+    if (product) {
+      const columns = Object.keys(product);
+      console.log('DEBUG: Product columns:', columns);
+      if (!columns.includes('stock_quantity')) {
+        return NextResponse.json({ 
+          error: `Column 'stock_quantity' missing. Available columns: ${columns.join(', ')}`,
+          productId: validated.productId
+        }, { status: 500 });
+      }
+    }
 
     if (productError || !product) {
       console.error('Cart POST: Product not found or error:', {
