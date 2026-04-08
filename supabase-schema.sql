@@ -33,9 +33,9 @@ CREATE TABLE IF NOT EXISTS products (
   price DECIMAL(10,2) NOT NULL,
   image_url TEXT,
   category_id UUID REFERENCES categories(id),
-  stock_quantity INTEGER DEFAULT 0,
+  inventory_count INTEGER DEFAULT 0,
   rating DECIMAL(3, 2) DEFAULT 0,
-  reviews_count INTEGER DEFAULT 0,
+  review_count INTEGER DEFAULT 0,
   is_featured BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -272,7 +272,7 @@ BEGIN
 
     -- Update stock
     UPDATE products 
-    SET stock_quantity = stock_quantity - (v_item->>'quantity')::INTEGER
+    SET inventory_count = inventory_count - (v_item->>'quantity')::INTEGER
     WHERE id = (v_item->>'product_id')::UUID;
   END LOOP;
 

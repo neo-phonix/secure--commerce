@@ -40,11 +40,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     // Check stock
     const { data: product } = await supabase
       .from('products')
-      .select('stock_quantity')
+      .select('inventory_count')
       .eq('id', item.product_id)
       .single();
 
-    if (product && product.stock_quantity < validated.quantity) {
+    if (product && product.inventory_count < validated.quantity) {
       return NextResponse.json({ error: 'Insufficient stock' }, { status: 400 });
     }
 

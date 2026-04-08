@@ -151,7 +151,7 @@ export async function POST(request: Request) {
     const productIds = items.map(item => item.id);
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, price, stock_quantity')
+      .select('id, price, inventory_count')
       .in('id', productIds);
 
     if (productsError || !products) {
@@ -168,7 +168,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Product not found' }, { status: 400 });
       }
       
-      if (product.stock_quantity < item.quantity) {
+      if (product.inventory_count < item.quantity) {
         return NextResponse.json({ error: 'Product out of stock' }, { status: 400 });
       }
 

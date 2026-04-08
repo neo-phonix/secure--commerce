@@ -10,7 +10,7 @@
         "description": { "type": "string" },
         "price": { "type": "number" },
         "image_url": { "type": "string" },
-        "stock_quantity": { "type": "integer" },
+        "inventory_count": { "type": "integer" },
         "category_id": { "type": "string" },
         "slug": { "type": "string" },
         "rating": { "type": "number" }

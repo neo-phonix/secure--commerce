@@ -16,9 +16,9 @@ interface Product {
   price: number;
   image_url: string;
   category: string;
-  stock_quantity: number;
+  inventory_count: number;
   rating: number;
-  reviews_count: number;
+  review_count: number;
 }
 
 interface Category {

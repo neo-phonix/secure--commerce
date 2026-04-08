@@ -88,17 +88,6 @@ export async function POST(req: NextRequest) {
       .eq('id', validated.productId)
       .single();
 
-    if (product) {
-      const columns = Object.keys(product);
-      console.log('DEBUG: Product columns:', columns);
-      if (!columns.includes('stock_quantity')) {
-        return NextResponse.json({ 
-          error: `Column 'stock_quantity' missing. Available columns: ${columns.join(', ')}`,
-          productId: validated.productId
-        }, { status: 500 });
-      }
-    }
-
     if (productError || !product) {
       console.error('Cart POST: Product not found or error:', {
         productId: validated.productId,
@@ -112,7 +101,7 @@ export async function POST(req: NextRequest) {
       }, { status: 404 });
     }
 
-    if (product.stock_quantity < validated.quantity) {
+    if (product.inventory_count < validated.quantity) {
       return NextResponse.json({ error: 'Insufficient stock' }, { status: 400 });
     }
 
@@ -135,7 +124,7 @@ export async function POST(req: NextRequest) {
       const newQuantity = existingItem.quantity + validated.quantity;
       
       // Check if total quantity exceeds stock
-      if (product.stock_quantity < newQuantity) {
+      if (product.inventory_count < newQuantity) {
         return NextResponse.json({ error: 'Insufficient stock' }, { status: 400 });
       }
 

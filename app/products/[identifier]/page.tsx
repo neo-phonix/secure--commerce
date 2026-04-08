@@ -15,7 +15,7 @@ import AIRecommendations from '@/components/ai-recommendations';
 import Reviews from '@/components/reviews';
 import RecentlyViewed from '@/components/recently-viewed';
 import { Spinner } from '@/components/ui/spinner';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
 
 export default function ProductDetailPage({ params }: { params: Promise<{ identifier: string }> }) {
   const { identifier } = use(params);
@@ -144,7 +144,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ identi
                   {[1, 2, 3, 4, 5].map((i) => (
                     <Star key={i} className={`w-3 h-3 ${i <= (product.rating || 5) ? 'text-yellow-500 fill-current' : 'text-slate-300'}`} />
                   ))}
-                  <span className="text-xs font-bold text-slate-500 ml-2">(128 Reviews)</span>
+                  <span className="text-xs font-bold text-slate-500 ml-2">({product.review_count || 0} Reviews)</span>
                 </div>
               </div>
               
@@ -154,8 +154,13 @@ export default function ProductDetailPage({ params }: { params: Promise<{ identi
               
               <div className="flex items-center gap-4 mb-8">
                 <span className="text-4xl font-display font-bold text-primary">{formatCurrency(product.price)}</span>
-                <span className="px-3 py-1 bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-widest rounded-lg border border-accent/20">
-                  In Stock
+                <span className={cn(
+                  "px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-lg border",
+                  product.inventory_count > 0 
+                    ? "bg-accent/10 text-accent border-accent/20" 
+                    : "bg-red-500/10 text-red-500 border-red-500/20"
+                )}>
+                  {product.inventory_count > 0 ? 'In Stock' : 'Out of Stock'}
                 </span>
               </div>
 
@@ -185,7 +190,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ identi
                 
                 <button
                   onClick={user ? handleAddToCart : () => router.push(`/login?returnTo=${encodeURIComponent(window.location.pathname)}`)}
-                  disabled={isAdding}
+                  disabled={isAdding || product.inventory_count === 0}
                   className={`flex-grow py-4 rounded-2xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl disabled:opacity-70 disabled:cursor-not-allowed ${
                     user 
                       ? 'bg-primary text-white shadow-primary/30' 

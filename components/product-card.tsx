@@ -18,9 +18,9 @@ interface Product {
   price: number;
   image_url: string;
   category: string;
-  stock_quantity: number;
+  inventory_count: number;
   rating: number;
-  reviews_count: number;
+  review_count: number;
 }
 
 interface ProductCardProps {
@@ -74,12 +74,12 @@ export default function ProductCard({ product }: ProductCardProps) {
         
         {/* Badges */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
-          {product.stock_quantity < 5 && product.stock_quantity > 0 && (
+          {product.inventory_count < 5 && product.inventory_count > 0 && (
             <span className="px-2 py-1 bg-amber-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider">
               {t.product.low_stock}
             </span>
           )}
-          {product.stock_quantity === 0 && (
+          {product.inventory_count === 0 && (
             <span className="px-2 py-1 bg-red-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider">
               {t.product.out_of_stock}
             </span>
@@ -108,7 +108,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
           <button
             onClick={handleAddToCart}
-            disabled={product.stock_quantity === 0}
+            disabled={product.inventory_count === 0}
             className={cn(
               "w-full py-3 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-colors",
               user 
