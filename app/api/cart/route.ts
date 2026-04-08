@@ -101,12 +101,27 @@ export async function POST(req: NextRequest) {
       }, { status: 404 });
     }
 
-    if (product.inventory_count < validated.quantity) {
+    // Determine stock count column (handle both legacy and new schema, and handle nulls)
+    const stockCount = (product.inventory_count !== undefined && product.inventory_count !== null) 
+      ? product.inventory_count 
+      : (product.stock_quantity !== undefined && product.stock_quantity !== null ? product.stock_quantity : 0);
+    
+    console.log('Cart POST: Product found:', { 
+      id: product.id, 
+      inventory_count: product.inventory_count, 
+      stock_quantity: product.stock_quantity,
+      resolvedStock: stockCount
+    });
+
+    if (stockCount < validated.quantity) {
+      console.error('Cart POST: Insufficient stock:', { stockCount, requested: validated.quantity });
       return NextResponse.json({ error: 'Insufficient stock' }, { status: 400 });
     }
 
-    // Use upsert-like logic: check if item already in cart
-    console.log('Checking existing item for user:', user.id, 'product:', validated.productId);
+    // Use upsert logic to handle both insert and update atomically
+    console.log('Cart POST: Attempting upsert for user:', user.id, 'product:', validated.productId);
+    
+    // First, check if item already exists to calculate new quantity for stock check
     const { data: existingItem, error: existingItemError } = await supabase
       .from('cart_items')
       .select('id, quantity')
@@ -115,47 +130,55 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (existingItemError) {
-      console.error('Error checking existing cart item:', existingItemError);
+      console.error('Cart POST: Error checking existing cart item:', existingItemError);
       throw existingItemError;
     }
-    console.log('Existing item found:', existingItem);
 
-    if (existingItem) {
-      const newQuantity = existingItem.quantity + validated.quantity;
-      
-      // Check if total quantity exceeds stock
-      if (product.inventory_count < newQuantity) {
-        return NextResponse.json({ error: 'Insufficient stock' }, { status: 400 });
-      }
+    const newQuantity = existingItem ? existingItem.quantity + validated.quantity : validated.quantity;
+    console.log('Cart POST: Calculated new quantity:', newQuantity, 'Existing:', existingItem?.quantity);
 
-      console.log('Updating existing item:', existingItem.id, 'to new quantity:', newQuantity);
-      const { error: updateError } = await supabase
-        .from('cart_items')
-        .update({ quantity: newQuantity, updated_at: new Date().toISOString() })
-        .eq('id', existingItem.id);
-
-      if (updateError) {
-        console.error('Error updating cart item:', updateError);
-        throw updateError;
-      }
-      console.log('Update successful');
-    } else {
-      console.log('Inserting new item for user:', user.id, 'product:', validated.productId);
-      const { error: insertError } = await supabase
-        .from('cart_items')
-        .insert({
-          user_id: user.id,
-          product_id: validated.productId,
-          quantity: validated.quantity,
-        });
-
-      if (insertError) {
-        console.error('Error inserting cart item:', insertError);
-        throw insertError;
-      }
-      console.log('Insert successful');
+    // Check if total quantity exceeds stock
+    if (stockCount < newQuantity) {
+      console.error('Cart POST: Insufficient stock for update:', { stockCount, requested: newQuantity });
+      return NextResponse.json({ error: 'Insufficient stock' }, { status: 400 });
     }
 
+    const { data: upsertData, error: upsertError } = await supabase
+      .from('cart_items')
+      .upsert({
+        user_id: user.id,
+        product_id: validated.productId,
+        quantity: newQuantity,
+        updated_at: new Date().toISOString()
+      }, { 
+        onConflict: 'user_id,product_id' 
+      })
+      .select();
+
+    if (upsertError) {
+      console.error('Cart POST: Upsert Error:', upsertError);
+      // If upsert fails, try manual insert/update as fallback
+      if (existingItem) {
+        console.log('Cart POST: Falling back to update');
+        const { error: updateError } = await supabase
+          .from('cart_items')
+          .update({ quantity: newQuantity, updated_at: new Date().toISOString() })
+          .eq('id', existingItem.id);
+        if (updateError) throw updateError;
+      } else {
+        console.log('Cart POST: Falling back to insert');
+        const { error: insertError } = await supabase
+          .from('cart_items')
+          .insert({
+            user_id: user.id,
+            product_id: validated.productId,
+            quantity: validated.quantity,
+          });
+        if (insertError) throw insertError;
+      }
+    }
+
+    console.log('Cart POST: Success', upsertData);
     return NextResponse.json({ message: 'Item added to cart' });
   } catch (error) {
     if (error instanceof z.ZodError) {
