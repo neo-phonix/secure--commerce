@@ -151,7 +151,7 @@ export async function POST(request: Request) {
     const productIds = items.map(item => item.id);
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, price, inventory_count')
+      .select('*')
       .in('id', productIds);
 
     if (productsError || !products) {
@@ -168,8 +168,13 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Product not found' }, { status: 400 });
       }
       
-      if (product.inventory_count < item.quantity) {
-        return NextResponse.json({ error: 'Product out of stock' }, { status: 400 });
+      // Determine stock count column (handle both legacy and new schema, and handle nulls)
+      const stockCount = (product.inventory_count !== undefined && product.inventory_count !== null) 
+        ? product.inventory_count 
+        : (product.stock_quantity !== undefined && product.stock_quantity !== null ? product.stock_quantity : 0);
+
+      if (stockCount < item.quantity) {
+        return NextResponse.json({ error: `Product ${product.name || item.id} out of stock` }, { status: 400 });
       }
 
       const itemTotal = Number(product.price) * item.quantity;

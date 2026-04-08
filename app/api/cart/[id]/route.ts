@@ -40,12 +40,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     // Check stock
     const { data: product } = await supabase
       .from('products')
-      .select('inventory_count')
+      .select('*')
       .eq('id', item.product_id)
       .single();
 
-    if (product && product.inventory_count < validated.quantity) {
-      return NextResponse.json({ error: 'Insufficient stock' }, { status: 400 });
+    if (product) {
+      // Determine stock count column (handle both legacy and new schema, and handle nulls)
+      const stockCount = (product.inventory_count !== undefined && product.inventory_count !== null) 
+        ? product.inventory_count 
+        : (product.stock_quantity !== undefined && product.stock_quantity !== null ? product.stock_quantity : 0);
+
+      if (stockCount < validated.quantity) {
+        return NextResponse.json({ error: 'Insufficient stock' }, { status: 400 });
+      }
     }
 
     const { error: updateError } = await supabase
