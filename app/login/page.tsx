@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 import { Spinner } from '@/components/ui/spinner';
 import { useLanguage } from '@/context/language-context';
 
-export default function Login() {
+function LoginContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -202,5 +202,17 @@ export default function Login() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function Login() {
+  return (
+    <React.Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-900">
+        <Spinner size={40} />
+      </div>
+    }>
+      <LoginContent />
+    </React.Suspense>
   );
 }
