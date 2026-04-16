@@ -22,7 +22,9 @@ function SearchContent() {
         const res = await fetch(`/api/products?search=${encodeURIComponent(query)}&sort=${sortBy}`);
         if (res.ok) {
           const data = await res.json();
-          setProducts(data);
+          if (Array.isArray(data)) {
+            setProducts(data);
+          }
         }
       } catch (error) {
         console.error('Search failed', error);

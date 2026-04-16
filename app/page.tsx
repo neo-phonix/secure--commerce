@@ -46,9 +46,9 @@ export default function Home() {
             .select('*')
         ]);
 
-        if (productsRes) setFeaturedProducts(productsRes as Product[]);
+        if (Array.isArray(productsRes)) setFeaturedProducts(productsRes as Product[]);
         
-        if (categoriesRes.data) {
+        if (categoriesRes.data && Array.isArray(categoriesRes.data)) {
           const categoriesWithCounts = await Promise.all(
             categoriesRes.data.map(async (category) => {
               const { count } = await supabase

@@ -29,7 +29,7 @@ export default function CategoriesPage() {
         .from('categories')
         .select('*');
 
-      if (categoriesError) {
+      if (categoriesError || !categoriesData) {
         console.error('Error fetching categories:', categoriesError);
         setLoading(false);
         return;
@@ -40,7 +40,7 @@ export default function CategoriesPage() {
           const { count } = await supabase
             .from('products')
             .select('*', { count: 'exact', head: true })
-            .eq('category', category.name);
+            .eq('category_id', category.id);
 
           return {
             ...category,

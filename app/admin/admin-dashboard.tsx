@@ -58,9 +58,9 @@ export default function AdminDashboard() {
       
       const data = await response.json();
       
-      setStats(data.stats);
-      setRecentOrders(data.recentOrders);
-      setChartData(data.chartData);
+      if (data.stats) setStats(data.stats);
+      if (Array.isArray(data.recentOrders)) setRecentOrders(data.recentOrders);
+      if (Array.isArray(data.chartData)) setChartData(data.chartData);
     } catch (error: any) {
       console.error('Error fetching admin data:', error);
       toast.error('Failed to load admin analytics');
