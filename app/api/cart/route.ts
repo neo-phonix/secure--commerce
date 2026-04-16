@@ -17,7 +17,8 @@ const addToCartSchema = z.object({
 export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData?.user;
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -61,7 +62,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const { data, error: userError } = await supabase.auth.getUser();
+    const user = data?.user;
     console.log('Cart POST User:', user?.id, userError);
 
     if (!user) {
@@ -143,42 +145,50 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Insufficient stock' }, { status: 400 });
     }
 
-    const { data: upsertData, error: upsertError } = await supabase
-      .from('cart_items')
-      .upsert({
-        user_id: user.id,
-        product_id: validated.productId,
-        quantity: newQuantity,
-        updated_at: new Date().toISOString()
-      }, { 
-        onConflict: 'user_id,product_id' 
-      })
-      .select();
+    // Perform update or insert
+    if (existingItem) {
+      console.log('Cart POST: Updating existing item');
+      const { error: updateError } = await supabase
+        .from('cart_items')
+        .update({ 
+          quantity: newQuantity, 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', existingItem.id)
+        .eq('user_id', user.id); // Safety check for RLS
 
-    if (upsertError) {
-      console.error('Cart POST: Upsert Error:', upsertError);
-      // If upsert fails, try manual insert/update as fallback
-      if (existingItem) {
-        console.log('Cart POST: Falling back to update');
-        const { error: updateError } = await supabase
-          .from('cart_items')
-          .update({ quantity: newQuantity, updated_at: new Date().toISOString() })
-          .eq('id', existingItem.id);
-        if (updateError) throw updateError;
-      } else {
-        console.log('Cart POST: Falling back to insert');
-        const { error: insertError } = await supabase
-          .from('cart_items')
-          .insert({
-            user_id: user.id,
-            product_id: validated.productId,
-            quantity: validated.quantity,
-          });
-        if (insertError) throw insertError;
+      if (updateError) {
+        console.error('Cart POST: Update Error:', updateError);
+        throw updateError;
+      }
+    } else {
+      console.log('Cart POST: Inserting new item');
+      const { error: insertError } = await supabase
+        .from('cart_items')
+        .insert({
+          user_id: user.id,
+          product_id: validated.productId,
+          quantity: validated.quantity,
+          updated_at: new Date().toISOString()
+        });
+
+      if (insertError) {
+        console.error('Cart POST: Insert Error:', insertError);
+        // Handle rare race condition
+        if (insertError.code === '23505') {
+          console.log('Cart POST: Race condition detected, retrying update');
+          const { error: retryError } = await supabase
+            .from('cart_items')
+            .update({ quantity: newQuantity, updated_at: new Date().toISOString() })
+            .eq('user_id', user.id)
+            .eq('product_id', validated.productId);
+          if (retryError) throw retryError;
+        } else {
+          throw insertError;
+        }
       }
     }
 
-    console.log('Cart POST: Success', upsertData);
     return NextResponse.json({ message: 'Item added to cart' });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -195,7 +205,8 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData?.user;
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

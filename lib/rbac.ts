@@ -4,7 +4,8 @@ export type UserRole = 'user' | 'admin' | 'super_admin';
 
 export async function getUserRole(): Promise<UserRole> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: userData } = await supabase.auth.getUser();
+  const user = userData?.user;
 
   if (!user) return 'user';
 
