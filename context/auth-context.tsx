@@ -94,8 +94,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshUser = async () => {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (!error) {
+    const { data: userData, error } = await supabase.auth.getUser();
+    const user = userData?.user;
+    if (!error && user) {
       setUser(user);
     }
   };

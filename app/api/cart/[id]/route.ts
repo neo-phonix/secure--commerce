@@ -16,7 +16,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData?.user;
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -83,7 +84,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
 
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData?.user;
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

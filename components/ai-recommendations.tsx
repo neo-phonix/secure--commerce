@@ -33,7 +33,8 @@ export default function AIRecommendations({ currentProduct }: { currentProduct?:
       if (!recentlyViewed) return;
       try {
         const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: userData } = await supabase.auth.getUser();
+        const user = userData?.user;
         if (!user) {
           setIsLoading(false);
           return;

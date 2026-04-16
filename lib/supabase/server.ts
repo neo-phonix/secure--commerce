@@ -33,3 +33,24 @@ export const createClient = async () => {
     }
   );
 };
+
+export const createAdminClient = async () => {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return [];
+        },
+        setAll() {
+          // No-op for admin client
+        },
+      },
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      }
+    }
+  );
+};

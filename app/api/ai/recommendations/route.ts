@@ -19,7 +19,8 @@ export async function POST(request: Request) {
   try {
     // 1. Auth check first (to get user ID for rate limiting)
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: userData, error: authError } = await supabase.auth.getUser();
+    const user = userData?.user;
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

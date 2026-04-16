@@ -30,7 +30,8 @@ export interface FirestoreErrorInfo {
 
 export async function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: userData } = await supabase.auth.getUser();
+  const user = userData?.user;
   
   const errInfo = {
     error: error instanceof Error ? error.message : String(error),

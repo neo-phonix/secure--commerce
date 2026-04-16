@@ -33,12 +33,17 @@ class RateLimiter {
   async check(limit: number, token: string): Promise<void> {
     // We always try to use the database-backed rate limiter first
     // to ensure consistency across multiple instances.
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!url || !key) {
+      console.warn('Supabase env vars missing for rate limiting, falling back to in-memory');
+      return this.checkInMemory(limit, token);
+    }
+
     try {
       // We use a separate client for rate limiting to avoid session issues in middleware
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        {
+      const supabase = createClient(url, key, {
           auth: {
             persistSession: false,
             autoRefreshToken: false,

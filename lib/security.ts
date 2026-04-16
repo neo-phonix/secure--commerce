@@ -1,11 +1,11 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { logAction } from '@/lib/audit';
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MINUTES = 15;
 
 export async function checkAccountLockout(email: string) {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   
   const { data: security, error } = await supabase
     .from('user_security')
@@ -33,7 +33,7 @@ export async function checkAccountLockout(email: string) {
 }
 
 export async function recordFailedLogin(email: string, ip: string, details: any = {}) {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   
   const { data: security, error } = await supabase
     .from('user_security')
@@ -93,7 +93,7 @@ export async function recordFailedLogin(email: string, ip: string, details: any 
 }
 
 export async function resetFailedLogins(email: string) {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   await supabase
     .from('user_security')
     .update({
@@ -108,7 +108,7 @@ export async function createSecurityAlert(
   severity: 'low' | 'medium' | 'high' | 'critical',
   details: any
 ) {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   await supabase.from('security_alerts').insert({
     type,
     severity,

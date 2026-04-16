@@ -78,9 +78,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
     console.log('Cart POST Body:', body);
-    const validated = addToCartSchema.parse(body);
+    
+    let validated;
+    try {
+      validated = addToCartSchema.parse(body);
+    } catch (zodError: any) {
+      console.error('Cart POST Zod Error:', zodError.issues);
+      return NextResponse.json({ error: 'Invalid input data', details: zodError.issues }, { status: 400 });
+    }
     console.log('Cart POST Validated:', validated);
 
     // Check if product exists and has stock
@@ -172,21 +182,30 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString()
         });
 
-      if (insertError) {
-        console.error('Cart POST: Insert Error:', insertError);
-        // Handle rare race condition
-        if (insertError.code === '23505') {
-          console.log('Cart POST: Race condition detected, retrying update');
-          const { error: retryError } = await supabase
-            .from('cart_items')
-            .update({ quantity: newQuantity, updated_at: new Date().toISOString() })
-            .eq('user_id', user.id)
-            .eq('product_id', validated.productId);
-          if (retryError) throw retryError;
-        } else {
-          throw insertError;
+    if (insertError) {
+      console.error('Cart POST: Insert Error:', {
+        code: insertError.code,
+        message: insertError.message,
+        details: insertError.details,
+        hint: insertError.hint
+      });
+      // Handle rare race condition
+      if (insertError.code === '23505') {
+        console.log('Cart POST: Race condition detected, retrying update');
+        const { error: retryError } = await supabase
+          .from('cart_items')
+          .update({ quantity: newQuantity, updated_at: new Date().toISOString() })
+          .eq('user_id', user.id)
+          .eq('product_id', validated.productId);
+        
+        if (retryError) {
+          console.error('Cart POST: Retry Update Error:', retryError);
+          throw retryError;
         }
+      } else {
+        throw insertError;
       }
+    }
     }
 
     return NextResponse.json({ message: 'Item added to cart' });
@@ -197,7 +216,9 @@ export async function POST(req: NextRequest) {
     console.error('Cart POST Error:', error);
     return NextResponse.json({ 
       error: error instanceof Error ? error.message : 'Internal Server Error',
-      details: error
+      details: error,
+      timestamp: new Date().toISOString(),
+      path: '/api/cart'
     }, { status: 500 });
   }
 }
