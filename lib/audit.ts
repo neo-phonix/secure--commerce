@@ -10,7 +10,8 @@ export async function logAction(
 ) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase.auth.getUser();
+    const user = data?.user;
     
     await supabase.from('audit_logs').insert({
       user_id: userId || user?.id || null,

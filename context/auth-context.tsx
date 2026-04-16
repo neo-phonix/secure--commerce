@@ -28,10 +28,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const setData = async () => {
       try {
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
+        const { data, error } = await supabase.auth.getUser();
+        const user = data?.user;
 
         if (error) {
           setUser(null);
@@ -39,10 +37,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else if (user) {
           setUser(user);
 
-          const {
-            data: { session },
-          } = await supabase.auth.getSession();
-          setSession(session ?? null);
+          const { data: sessionData } = await supabase.auth.getSession();
+          setSession(sessionData?.session ?? null);
         } else {
           setUser(null);
           setSession(null);
@@ -54,11 +50,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const authStateListener = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
+    const subscription = authStateListener.data.subscription;
 
     setData();
 
@@ -85,10 +82,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(user);
-      setSession(session);
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: sessionData } = await supabase.auth.getSession();
+      setUser(userData?.user ?? null);
+      setSession(sessionData?.session ?? null);
     } catch (e) {
       console.error('Error in login refresh:', e);
     } finally {
