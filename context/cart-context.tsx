@@ -89,11 +89,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success(`Added ${product.name} to cart`);
+        toast.success(`Added ${product.name} to cart!`);
         await fetchCart();
       } else {
         console.error('CartContext: Failed to add item:', data);
-        toast.error(data.error || 'Failed to add item');
+        
+        // Handle specific schema error for missing table
+        if (data.error && data.error.includes("Could not find the table")) {
+          toast.error("Database setup incomplete: Missing cart_items table. Please run the SQL schema script in Supabase.", { duration: 8000 });
+        } else {
+          toast.error(data.error || 'Failed to add item. Please try again.');
+        }
       }
     } catch (e) {
       console.error('CartContext: Error adding item:', e);

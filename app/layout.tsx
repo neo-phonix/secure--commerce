@@ -77,10 +77,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                       </LayoutWrapper>
                       <Chatbot />
                       <Toaster 
-                        position="bottom-right"
+                        position="top-center"
                         toastOptions={{
-                          className: 'dark:bg-slate-800 dark:text-white dark:border dark:border-slate-700',
-                          duration: 3000,
+                          className: 'dark:bg-slate-900 dark:text-white dark:border dark:border-slate-800 shadow-2xl rounded-2xl px-6 py-4 text-sm font-semibold z-[99999]',
+                          duration: 4000,
+                          success: {
+                            iconTheme: {
+                              primary: '#10b981',
+                              secondary: '#ffffff',
+                            },
+                          },
+                          error: {
+                            iconTheme: {
+                              primary: '#ef4444',
+                              secondary: '#ffffff',
+                            },
+                            duration: 6000,
+                          },
                         }}
                       />
                     </ErrorBoundary>
