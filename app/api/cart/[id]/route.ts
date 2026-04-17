@@ -58,19 +58,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const { error: updateError } = await supabase
       .from('cart_items')
-      .update({ quantity: validated.quantity, updated_at: new Date().toISOString() })
+      .update({ quantity: validated.quantity })
       .eq('id', id)
       .eq('user_id', user.id);
 
     if (updateError) throw updateError;
 
     return NextResponse.json({ message: 'Quantity updated' });
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid input', details: error.issues }, { status: 400 });
     }
     console.error('Cart PATCH Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ 
+      error: error?.message || 'Internal Server Error',
+      details: error,
+      timestamp: new Date().toISOString()
+    }, { status: 500 });
   }
 }
 
@@ -112,8 +116,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (error) throw error;
 
     return NextResponse.json({ message: 'Item removed' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Cart DELETE Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ 
+      error: error?.message || 'Internal Server Error',
+      details: error,
+      timestamp: new Date().toISOString()
+    }, { status: 500 });
   }
 }

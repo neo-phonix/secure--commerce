@@ -92,11 +92,27 @@ export async function middleware(request: NextRequest) {
   }
 
   // 3. Update Supabase session
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.error('Supabase configuration is missing in middleware')
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('TODO') || supabaseAnonKey.includes('TODO')) {
+    console.error('Supabase configuration is missing or invalid in middleware')
+    return NextResponse.json({ 
+      error: 'Supabase configuration is missing or invalid',
+      details: 'NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is not set correctly. Please check your environment variables.'
+    }, { status: 500 })
   }
-  let response = await updateSession(request)
+  
+  let response;
+  try {
+    response = await updateSession(request)
+  } catch (err: any) {
+    console.error('Middleware: Error updating session:', err)
+    return NextResponse.json({ 
+      error: 'Session update failed',
+      details: err?.message || 'An unexpected error occurred during session management.'
+    }, { status: 500 })
+  }
 
   // 4. Security Headers (OWASP Best Practice)
   const nonce = btoa(crypto.randomUUID())

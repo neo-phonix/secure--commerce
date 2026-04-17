@@ -17,45 +17,65 @@ const addToCartSchema = z.object({
 export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: userData } = await supabase.auth.getUser();
+    const { data: userData, error: authError } = await supabase.auth.getUser();
     const user = userData?.user;
 
-    if (!user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { data, error } = await supabase
       .from('cart_items')
-      .select(`
-        id,
-        quantity,
-        product:products (
-          id,
-          name,
-          price,
-          image_url
-        )
-      `)
+      .select('id, quantity, product_id')
       .eq('user_id', user.id);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Cart GET Error:', error);
+      return NextResponse.json({ 
+        error: error.message || 'Database error', 
+        details: error 
+      }, { status: 500 });
+    }
 
-    // Flatten the response and handle missing products safely
-    const cartItems = data
-      .filter((item: any) => item.product !== null) // Skip items where product was deleted
-      .map((item: any) => ({
+    if (!data || data.length === 0) {
+      return NextResponse.json([]);
+    }
+
+    // Manual join to be extra safe and debuggable
+    const productIds = data.map(item => item.product_id);
+    const { data: products, error: productsError } = await supabase
+      .from('products')
+      .select('id, name, price, image_url')
+      .in('id', productIds);
+
+    if (productsError) {
+      console.error('Cart GET Products Join Error:', productsError);
+      return NextResponse.json({ 
+        error: productsError.message || 'Error fetching product details', 
+        details: productsError 
+      }, { status: 500 });
+    }
+
+    const cartItems = data.map(item => {
+      const product = products?.find(p => p.id === item.product_id);
+      return {
         id: item.id,
-        productId: item.product.id,
-        name: item.product.name,
-        price: item.product.price,
-        image_url: item.product.image_url,
+        productId: item.product_id,
+        name: product?.name || 'Unknown Product',
+        price: product?.price || 0,
+        image_url: product?.image_url || '',
         quantity: item.quantity,
-      }));
+      };
+    });
 
     return NextResponse.json(cartItems);
-  } catch (error) {
-    console.error('Cart GET Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Cart GET Error Overall:', error);
+    return NextResponse.json({ 
+      error: error?.message || 'Internal Server Error',
+      details: error,
+      timestamp: new Date().toISOString()
+    }, { status: 500 });
   }
 }
 
@@ -161,8 +181,7 @@ export async function POST(req: NextRequest) {
       const { error: updateError } = await supabase
         .from('cart_items')
         .update({ 
-          quantity: newQuantity, 
-          updated_at: new Date().toISOString() 
+          quantity: newQuantity
         })
         .eq('id', existingItem.id)
         .eq('user_id', user.id); // Safety check for RLS
@@ -178,8 +197,7 @@ export async function POST(req: NextRequest) {
         .insert({
           user_id: user.id,
           product_id: validated.productId,
-          quantity: validated.quantity,
-          updated_at: new Date().toISOString()
+          quantity: validated.quantity
         });
 
     if (insertError) {
@@ -194,7 +212,7 @@ export async function POST(req: NextRequest) {
         console.log('Cart POST: Race condition detected, retrying update');
         const { error: retryError } = await supabase
           .from('cart_items')
-          .update({ quantity: newQuantity, updated_at: new Date().toISOString() })
+          .update({ quantity: newQuantity })
           .eq('user_id', user.id)
           .eq('product_id', validated.productId);
         
@@ -209,16 +227,23 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ message: 'Item added to cart' });
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid input', details: error.issues }, { status: 400 });
     }
-    console.error('Cart POST Error:', error);
+    console.error('Cart POST Error Overall:', {
+      message: error?.message,
+      code: error?.code,
+      details: error?.details,
+      hint: error?.hint,
+      error
+    });
     return NextResponse.json({ 
-      error: error instanceof Error ? error.message : 'Internal Server Error',
+      error: error?.message || (typeof error === 'string' ? error : 'Internal Server Error'),
       details: error,
       timestamp: new Date().toISOString(),
-      path: '/api/cart'
+      path: '/api/cart',
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
     }, { status: 500 });
   }
 }
@@ -241,8 +266,12 @@ export async function DELETE(req: NextRequest) {
     if (error) throw error;
 
     return NextResponse.json({ message: 'Cart cleared' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Cart DELETE Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ 
+      error: error?.message || 'Internal Server Error',
+      details: error,
+      timestamp: new Date().toISOString()
+    }, { status: 500 });
   }
 }
