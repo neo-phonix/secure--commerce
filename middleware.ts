@@ -92,10 +92,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // 3. Update Supabase session
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('TODO') || supabaseAnonKey.includes('TODO')) {
+  if (!url || !anonKey || url.includes('TODO') || anonKey.includes('TODO')) {
     console.error('Supabase configuration is missing or invalid in middleware')
     return NextResponse.json({ 
       error: 'Supabase configuration is missing or invalid',

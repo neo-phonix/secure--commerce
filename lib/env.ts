@@ -1,7 +1,13 @@
 export const env = {
-  get NEXT_PUBLIC_SUPABASE_URL() { return process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL; },
-  get NEXT_PUBLIC_SUPABASE_ANON_KEY() { return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY; },
-  get SUPABASE_SERVICE_ROLE_KEY() { return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY; },
+  get NEXT_PUBLIC_SUPABASE_URL() { 
+    return process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || process.env.URL; 
+  },
+  get NEXT_PUBLIC_SUPABASE_ANON_KEY() { 
+    return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || process.env.ANON_KEY || process.env.UPABASE_ANON_KEY; 
+  },
+  get SUPABASE_SERVICE_ROLE_KEY() { 
+    return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY || process.env.SERVICE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.E_SERVICE_ROLE_KEY; 
+  },
   get GEMINI_API_KEY() { return process.env.GEMINI_API_KEY; },
   get RAZORPAY_KEY_ID() { return process.env.RAZORPAY_KEY_ID; },
   get RAZORPAY_KEY_SECRET() { return process.env.RAZORPAY_KEY_SECRET; },

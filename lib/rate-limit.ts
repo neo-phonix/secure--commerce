@@ -33,8 +33,8 @@ class RateLimiter {
   async check(limit: number, token: string): Promise<void> {
     // We always try to use the database-backed rate limiter first
     // to ensure consistency across multiple instances.
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY || process.env.SERVICE_KEY || process.env.SUPABASE_SERVICE_KEY;
 
     if (!url || !key) {
       console.warn('Supabase env vars missing for rate limiting, falling back to in-memory');

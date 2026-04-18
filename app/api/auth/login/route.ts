@@ -36,9 +36,8 @@ export async function POST(request: Request) {
     const { email, password } = validatedData.data;
 
     // Check for required environment variables early
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
+    const { getSupabaseConfig } = await import('@/lib/supabase/server');
+    const { url, anonKey, serviceRoleKey } = getSupabaseConfig();
 
     if (!url || !anonKey || !serviceRoleKey) {
       const missing = [];
@@ -47,9 +46,13 @@ export async function POST(request: Request) {
       if (!serviceRoleKey) missing.push('SUPABASE_SERVICE_ROLE_KEY');
       
       console.error('Missing Supabase configuration:', missing);
+      
+      // DIAGNOSTIC - Helps find malformed/cut-off labels
+      const envKeys = Object.keys(process.env).filter(k => k.includes('SUPABASE') || k.includes('SERVICE') || k.includes('KEY'));
+      
       return NextResponse.json({ 
         error: 'Supabase configuration is incomplete.',
-        details: `Missing: ${missing.join(', ')}. Please check your environment variables in settings.`
+        details: `Missing: ${missing.join(', ')}. Found keys: [${envKeys.join(', ')}]. Please check your environment variables in settings.`
       }, { status: 500 });
     }
     
