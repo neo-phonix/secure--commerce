@@ -39,13 +39,12 @@ export async function POST(request: Request) {
     const { getSupabaseConfig } = await import('@/lib/supabase/server');
     const { url, anonKey, serviceRoleKey } = getSupabaseConfig();
 
-    if (!url || !anonKey || !serviceRoleKey) {
+    if (!url || !anonKey) {
       const missing = [];
       if (!url) missing.push('SUPABASE_URL');
       if (!anonKey) missing.push('SUPABASE_ANON_KEY');
-      if (!serviceRoleKey) missing.push('SUPABASE_SERVICE_ROLE_KEY');
       
-      console.error('Missing Supabase configuration:', missing);
+      console.error('Missing required Supabase configuration:', missing);
       
       // DIAGNOSTIC - Helps find malformed/cut-off labels
       const envKeys = Object.keys(process.env);
@@ -56,8 +55,12 @@ export async function POST(request: Request) {
 
       return NextResponse.json({ 
         error: 'Supabase configuration is incomplete.',
-        details: `Missing: ${missing.join(', ')}. Available keys: [${supabaseRelated.join(', ')}]. All keys count: ${envKeys.length}. Please ensure SUPABASE_SERVICE_ROLE_KEY is set in settings.`
+        details: `Missing: ${missing.join(', ')}. Available keys: [${supabaseRelated.join(', ')}]. All keys count: ${envKeys.length}. Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in settings.`
       }, { status: 500 });
+    }
+
+    if (!serviceRoleKey) {
+      console.warn('SUPABASE_SERVICE_ROLE_KEY is missing. Security features will be limited.');
     }
     
     // Check for account lockout

@@ -46,18 +46,22 @@ export async function POST(request: Request) {
     
     // Check for required environment variables early
     const { getSupabaseConfig } = await import('@/lib/supabase/server');
-    const { url, anonKey } = getSupabaseConfig();
+    const { url, anonKey, serviceRoleKey } = getSupabaseConfig();
 
     if (!url || !anonKey || url.includes('TODO') || anonKey.includes('TODO')) {
       const missing = [];
       if (!url) missing.push('SUPABASE_URL');
       if (!anonKey) missing.push('SUPABASE_ANON_KEY');
       
-      console.error('Missing Supabase configuration:', missing);
+      console.error('Missing required Supabase configuration:', missing);
       return NextResponse.json({ 
         error: 'Supabase configuration is incomplete.',
         details: `Missing: ${missing.join(', ')}. Please check your environment variables in settings.`
       }, { status: 500 });
+    }
+
+    if (!serviceRoleKey) {
+      console.warn('SUPABASE_SERVICE_ROLE_KEY is missing. Security features will be limited.');
     }
 
     const supabase = await createClient();

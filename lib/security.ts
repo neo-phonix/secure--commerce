@@ -6,6 +6,7 @@ const LOCKOUT_DURATION_MINUTES = 15;
 
 export async function checkAccountLockout(email: string) {
   const supabase = await createAdminClient();
+  if (!supabase) return { isLocked: false };
   
   const { data: security, error } = await supabase
     .from('user_security')
@@ -34,6 +35,7 @@ export async function checkAccountLockout(email: string) {
 
 export async function recordFailedLogin(email: string, ip: string, details: any = {}) {
   const supabase = await createAdminClient();
+  if (!supabase) return;
   
   const { data: security, error } = await supabase
     .from('user_security')
@@ -94,6 +96,7 @@ export async function recordFailedLogin(email: string, ip: string, details: any 
 
 export async function resetFailedLogins(email: string) {
   const supabase = await createAdminClient();
+  if (!supabase) return;
   await supabase
     .from('user_security')
     .update({
@@ -109,6 +112,7 @@ export async function createSecurityAlert(
   details: any
 ) {
   const supabase = await createAdminClient();
+  if (!supabase) return;
   await supabase.from('security_alerts').insert({
     type,
     severity,

@@ -100,10 +100,8 @@ export const createAdminClient = async () => {
   const { url, serviceRoleKey } = getSupabaseConfig();
 
   if (!url || !serviceRoleKey || url.includes('TODO') || serviceRoleKey.includes('TODO')) {
-    const missing = [];
-    if (!url) missing.push('SUPABASE_URL');
-    if (!serviceRoleKey) missing.push('SUPABASE_SERVICE_ROLE_KEY');
-    throw new Error(`Supabase admin configuration is incomplete. Missing: ${missing.join(', ')}. Please check your environment variables in settings.`);
+    console.warn('Supabase admin configuration is incomplete. Security features (lockout) will be disabled.');
+    return null;
   }
 
   return createServerClient(
