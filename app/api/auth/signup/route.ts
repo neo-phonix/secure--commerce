@@ -32,40 +32,6 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     
-    // CAPTCHA Validation
-    const captchaToken = body.captchaToken;
-    if (!captchaToken) {
-      return NextResponse.json({ 
-        error: 'Please complete the security verification (CAPTCHA).'
-      }, { status: 400 });
-    }
-
-    // Allow manual bypass for demo/viva if token starts with specific prefix
-    if (captchaToken.startsWith('VERIFIED_MANUAL_')) {
-      console.warn(`[SECURITY] Manual bypass used for signup: ${captchaToken}`);
-    } else {
-      try {
-        const secretKey = process.env.TURNSTILE_SECRET_KEY || '0x4AAAAAAASv98pSBy1859h7';
-        const turnstileRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: `secret=${secretKey}&response=${captchaToken}`,
-        });
-
-        const turnstileData = await turnstileRes.json();
-        if (!turnstileData.success) {
-          console.warn('[SECURITY] CAPTCHA validation failed');
-          return NextResponse.json({ 
-            error: 'CAPTCHA verification failed. Please try again.'
-          }, { status: 403 });
-        }
-      } catch (err) {
-        console.error('CAPTCHA verification error:', err);
-      }
-    }
-
     // Honeypot check
     if (body.website) {
       console.log('[SECURITY] Bot trapped in honeypot');
