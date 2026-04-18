@@ -5,7 +5,7 @@ import { useCart } from '@/context/cart-context';
 import { useWishlist } from '@/context/wishlist-context';
 import { useRecentlyViewed } from '@/context/recently-viewed-context';
 import { useAuth } from '@/context/auth-context';
-import { Star, ShieldCheck, ShoppingCart, Heart, ArrowLeft, Truck, RefreshCw, Lock, ChevronRight, Minus, Plus, Share2, Info, LogIn } from 'lucide-react';
+import { Star, ShieldCheck, ShoppingCart, Heart, ArrowLeft, Truck, RefreshCw, Lock, ChevronRight, Minus, Plus, Share2, Info, LogIn, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -21,7 +21,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ identi
   const { identifier } = use(params);
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdding, setIsAdding] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'adding' | 'added'>('idle');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
   const { addItem: addToCart } = useCart();
@@ -56,7 +56,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ identi
   }, [fetchProduct]);
 
   const handleAddToCart = async () => {
-    setIsAdding(true);
+    setStatus('adding');
     // Simulate a small delay for better UX
     await new Promise(resolve => setTimeout(resolve, 600));
     
@@ -67,7 +67,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ identi
       image_url: product.image_url
     }, quantity);
     
-    setIsAdding(false);
+    setStatus('added');
+    setTimeout(() => setStatus('idle'), 2500);
   };
 
   if (loading) return (
@@ -190,17 +191,25 @@ export default function ProductDetailPage({ params }: { params: Promise<{ identi
                 
                 <button
                   onClick={user ? handleAddToCart : () => router.push(`/login?returnTo=${encodeURIComponent(window.location.pathname)}`)}
-                  disabled={isAdding || product.inventory_count === 0}
-                  className={`flex-grow py-4 rounded-2xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl disabled:opacity-70 disabled:cursor-not-allowed ${
+                  disabled={status !== 'idle' || product.inventory_count === 0}
+                  className={cn(
+                    "flex-grow py-4 rounded-2xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed",
                     user 
-                      ? 'bg-primary text-white shadow-primary/30' 
-                      : 'bg-slate-900 text-white shadow-slate-900/30'
-                  }`}
+                      ? status === 'added'
+                        ? "bg-green-600 text-white shadow-lg shadow-green-600/30 scale-[1.02]"
+                        : "bg-primary text-white shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98]" 
+                      : "bg-slate-900 text-white shadow-2xl shadow-slate-900/30 hover:scale-[1.02] active:scale-[0.98]"
+                  )}
                 >
-                  {isAdding ? (
+                  {status === 'adding' ? (
                     <>
                       <Spinner size={20} className="text-white" />
                       Adding...
+                    </>
+                  ) : status === 'added' ? (
+                    <>
+                      <Check className="w-5 h-5 animate-in zoom-in duration-300" />
+                      Added to Cart
                     </>
                   ) : user ? (
                     <>

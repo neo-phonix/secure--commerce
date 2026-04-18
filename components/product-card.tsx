@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ShoppingCart, Heart, Star, Eye, ShieldCheck, LogIn } from 'lucide-react';
+import { ShoppingCart, Heart, Star, Eye, ShieldCheck, LogIn, Check } from 'lucide-react';
 import { useCart } from '@/context/cart-context';
 import { useWishlist } from '@/context/wishlist-context';
 import { useRecentlyViewed } from '@/context/recently-viewed-context';
@@ -28,6 +29,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const [isAdded, setIsAdded] = useState(false);
   const { addItem: addToCart } = useCart();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const { addProduct: addToRecentlyViewed } = useRecentlyViewed();
@@ -47,11 +49,13 @@ export default function ProductCard({ product }: ProductCardProps) {
     }
   };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (user) {
-      addToCart(product);
+      await addToCart(product);
+      setIsAdded(true);
+      setTimeout(() => setIsAdded(false), 2500);
     } else {
       router.push(`/login?returnTo=${encodeURIComponent(window.location.pathname)}`);
     }
@@ -108,19 +112,28 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
           <button
             onClick={handleAddToCart}
-            disabled={product.inventory_count === 0}
+            disabled={product.inventory_count === 0 || isAdded}
             className={cn(
-              "w-full py-3 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-colors",
+              "w-full py-3 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all duration-300",
               user 
-                ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20" 
+                ? isAdded 
+                  ? "bg-green-600 hover:bg-green-700 shadow-green-600/30 scale-[1.02]"
+                  : "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20" 
                 : "bg-slate-900 hover:bg-black shadow-slate-900/20"
             )}
           >
             {user ? (
-              <>
-                <ShoppingCart className="w-4 h-4" />
-                {t.product.add_to_cart}
-              </>
+              isAdded ? (
+                <>
+                  <Check className="w-4 h-4 animate-in zoom-in duration-300" />
+                  Added
+                </>
+              ) : (
+                <>
+                  <ShoppingCart className="w-4 h-4" />
+                  {t.product.add_to_cart}
+                </>
+              )
             ) : (
               <>
                 <LogIn className="w-4 h-4" />
