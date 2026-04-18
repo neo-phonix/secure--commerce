@@ -44,10 +44,6 @@ export default function Signup() {
 
       if (res.ok) {
         if (data.session) {
-          const { useAuth } = await import('@/context/auth-context');
-          // We need to access the login function from context
-          // Since we're in a component, we can use the hook we already have access to if we add it
-          // But wait, I didn't import useAuth in Signup component yet.
           toast.success(t.auth.signup.success);
           router.push('/login'); // Default behavior is to go to login
         } else {
@@ -55,7 +51,8 @@ export default function Signup() {
           router.push('/login');
         }
       } else {
-        toast.error(data.error || t.auth.signup.error);
+        const errorMessage = data.details ? `${data.error}: ${typeof data.details === 'string' ? data.details : JSON.stringify(data.details)}` : (data.error || t.auth.signup.error);
+        toast.error(errorMessage);
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t.auth.signup.error);

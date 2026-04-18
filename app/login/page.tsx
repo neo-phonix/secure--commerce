@@ -55,7 +55,8 @@ function LoginContent() {
           setLockoutInfo({ locked: true, until: data.until });
           toast.error(t.auth.login.account_locked);
         } else {
-          toast.error(data.error || t.auth.login.error);
+          const errorMessage = data.details ? `${data.error}: ${data.details}` : (data.error || t.auth.login.error);
+          toast.error(errorMessage);
         }
       }
     } catch (error) {

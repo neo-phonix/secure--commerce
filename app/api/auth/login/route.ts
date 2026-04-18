@@ -34,6 +34,18 @@ export async function POST(request: Request) {
     }
 
     const { email, password } = validatedData.data;
+
+    // Check for required environment variables early
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Missing Supabase configuration:', {
+        url: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        anonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        serviceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+      });
+      return NextResponse.json({ 
+        error: 'Supabase configuration is missing. Please set up your environment variables.' 
+      }, { status: 500 });
+    }
     
     // Check for account lockout
     const { checkAccountLockout, recordFailedLogin, resetFailedLogins } = await import('@/lib/security');
@@ -43,12 +55,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ 
         error: `Account is locked due to multiple failed login attempts. Please try again in ${remainingMinutes} minutes.` 
       }, { status: 403 });
-    }
-
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      return NextResponse.json({ 
-        error: 'Supabase configuration is missing. Please set up your environment variables.' 
-      }, { status: 500 });
     }
 
     const supabase = await createClient();
@@ -80,6 +86,10 @@ export async function POST(request: Request) {
       session: data.session 
     });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Login error:', error);
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
   }
 }
