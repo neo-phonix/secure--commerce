@@ -36,8 +36,7 @@ export async function POST(request: Request) {
     const captchaToken = body.captchaToken;
     if (!captchaToken) {
       return NextResponse.json({ 
-        error: 'Please complete the security verification (CAPTCHA).',
-        securityAudit: { status: 'rejected', reason: 'MISSING_TOKEN' }
+        error: 'Please complete the security verification (CAPTCHA).'
       }, { status: 400 });
     }
 
@@ -59,8 +58,7 @@ export async function POST(request: Request) {
         if (!turnstileData.success) {
           console.warn('[SECURITY] CAPTCHA validation failed');
           return NextResponse.json({ 
-            error: 'CAPTCHA verification failed. Please try again.',
-            securityAudit: { status: 'rejected', reason: 'INVALID_TOKEN' }
+            error: 'CAPTCHA verification failed. Please try again.'
           }, { status: 403 });
         }
       } catch (err) {
@@ -72,8 +70,7 @@ export async function POST(request: Request) {
     if (body.website) {
       console.log('[SECURITY] Bot trapped in honeypot');
       return NextResponse.json({ 
-        message: 'User created successfully.',
-        securityAudit: { status: 'silent_drop', reason: 'HONEYPOT_TRIGGERED' }
+        message: 'User created successfully.'
       }, { status: 201 });
     }
 
@@ -89,8 +86,7 @@ export async function POST(request: Request) {
     if (isDisposableEmail(email)) {
       console.warn(`[SECURITY] Blocked disposable email signup attempt: ${email}`);
       return NextResponse.json({ 
-        error: 'Temporary email addresses are not allowed.',
-        securityAudit: { status: 'rejected', reason: 'DISPOSABLE_EMAIL_DETECTED', target: email }
+        error: 'Temporary email addresses are not allowed.'
       }, { status: 400 });
     }
     

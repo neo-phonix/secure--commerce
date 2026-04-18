@@ -9,7 +9,6 @@ import toast from 'react-hot-toast';
 import { Spinner } from '@/components/ui/spinner';
 import { useLanguage } from '@/context/language-context';
 import { Turnstile } from '@marsidev/react-turnstile';
-import { ShieldAlert, ShieldCheck, RefreshCw, AlertCircle, Terminal, Info } from 'lucide-react';
 
 export default function Signup() {
   const [name, setName] = useState('');
@@ -18,38 +17,10 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [honeypot, setHoneypot] = useState('');
   const [captchaToken, setCaptchaToken] = useState('');
-  const [captchaStatus, setCaptchaStatus] = useState<'idle' | 'loading' | 'error' | 'success'>('idle');
   const [loading, setLoading] = useState(false);
-  const [showAudit, setShowAudit] = useState(false);
-  
-  const [emailSecurityStatus, setEmailSecurityStatus] = useState<{
-    scanning: boolean;
-    isDisposable: boolean;
-    domain: string;
-  }>({ scanning: false, isDisposable: false, domain: '' });
 
   const { t } = useLanguage();
   const router = useRouter();
-
-  const handleEmailChange = (newEmail: string) => {
-    setEmail(newEmail);
-    if (newEmail.includes('@')) {
-      const domain = newEmail.split('@').pop() || '';
-      setEmailSecurityStatus(prev => ({ ...prev, domain, scanning: true }));
-      // Debounced check simulation for UI
-      setTimeout(() => {
-        setEmailSecurityStatus(prev => ({ ...prev, scanning: false }));
-      }, 500);
-    }
-  };
-
-  const handleManualBypass = () => {
-    // For cybersecurity projects, having a "Debug/Bypass" for Viva is helpful
-    const bypassToken = `VERIFIED_MANUAL_${Math.random().toString(36).substring(7)}`;
-    setCaptchaToken(bypassToken);
-    setCaptchaStatus('success');
-    toast.success("Security check bypassed (Manual Mode Enabled)");
-  };
 
   const handleBack = () => {
     router.back();
@@ -196,7 +167,7 @@ export default function Signup() {
                   type="email"
                   required
                   value={email}
-                  onChange={(e) => handleEmailChange(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-12 pr-4 py-3 bg-slate-100 dark:bg-slate-800 border border-transparent focus:border-primary/30 dark:focus:border-primary/30 focus:bg-white dark:focus:bg-slate-700 rounded-2xl outline-none transition-all text-black dark:text-white placeholder:text-black/60 dark:placeholder:text-white/60 font-semibold"
                   placeholder={t.auth.signup.email_placeholder}
                 />
@@ -248,103 +219,16 @@ export default function Signup() {
               />
             </div>
 
-            <div className="space-y-4 pt-4 border-t border-black/5 dark:border-white/5">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-black/40 dark:text-white/40">
-                  Security Defense Layers ({captchaToken ? '2/2' : '1/2'})
-                </span>
-                <button 
-                  type="button"
-                  onClick={() => setShowAudit(!showAudit)}
-                  className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1"
-                >
-                  <Terminal className="w-3 h-3" />
-                  {showAudit ? 'Hide Logs' : 'View Audit Logs'}
-                </button>
-              </div>
-
-              {showAudit && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-3 bg-black text-[#00ff00] font-mono text-[10px] rounded-xl space-y-1 overflow-auto max-h-32 mb-4 thin-scrollbar"
-                >
-                  <p>{`> [INIT] Security subsystems initialized...`}</p>
-                  <p>{`> [HOOK] Honeypot trap established on 'website' field`}</p>
-                  <p>{`> [CONST] Rate limiter configured: 10 req/min`}</p>
-                  <p>{`> [DATA] 99,000+ disposable domains loaded from local IR`}</p>
-                  {emailSecurityStatus.domain && (
-                    <p className="animate-pulse">{`> [SCAN] Analyzing domain: ${emailSecurityStatus.domain}...`}</p>
-                  )}
-                  {captchaToken && (
-                    <p className="text-blue-400">{`> [AUTH] Verification token generated: ${captchaToken.substring(0, 15)}...`}</p>
-                  )}
-                </motion.div>
-              )}
-
-              <div className="flex flex-col gap-3">
-                <div className="relative group">
-                  <div className={`flex justify-center min-h-[65px] bg-slate-50 dark:bg-slate-800/50 rounded-2xl items-center border border-dashed ${captchaToken ? 'border-emerald-500/50' : 'border-black/10 dark:border-white/10'} relative overflow-hidden`}>
-                    <Turnstile
-                      siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAAASv99r4w7u-f88J'}
-                      onSuccess={(token) => {
-                        setCaptchaToken(token);
-                        setCaptchaStatus('success');
-                      }}
-                      onError={() => setCaptchaStatus('error')}
-                      onExpire={() => {
-                        setCaptchaToken('');
-                        setCaptchaStatus('idle');
-                      }}
-                      options={{
-                        theme: 'light',
-                        size: 'normal',
-                      }}
-                    />
-                    
-                    {captchaStatus === 'idle' && !captchaToken && (
-                      <div className="absolute inset-0 flex items-center justify-center p-4 text-center">
-                        <p className="text-[10px] text-black/30 dark:text-white/30 font-medium">
-                          Secure verification is loading from Cloudflare...
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Manual Bypass for Demo if Turnstile stays idle/error for too long */}
-                  {!captchaToken && (
-                    <div className="mt-2 flex justify-center">
-                      <button
-                        type="button"
-                        onClick={handleManualBypass}
-                        className="text-[10px] text-primary/60 hover:text-primary font-bold uppercase tracking-wider underline underline-offset-4 decoration-dotted"
-                      >
-                        Verification not showing? Try manual bypass (Demo Only)
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-black/5 dark:border-white/5">
-                    {emailSecurityStatus.scanning ? (
-                      <RefreshCw className="w-3 h-3 text-primary animate-spin" />
-                    ) : emailSecurityStatus.domain ? (
-                      <ShieldCheck className="w-3 h-3 text-emerald-500" />
-                    ) : (
-                      <ShieldAlert className="w-3 h-3 text-black/20 dark:text-white/20" />
-                    )}
-                    <span className="text-[10px] font-bold opacity-60">Domain Scan</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-black/5 dark:border-white/5">
-                    {captchaToken ? (
-                      <ShieldCheck className="w-3 h-3 text-emerald-500" />
-                    ) : (
-                      <ShieldAlert className="w-3 h-3 text-black/20 dark:text-white/20" />
-                    )}
-                    <span className="text-[10px] font-bold opacity-60">Bot Check</span>
-                  </div>
-                </div>
+            <div className="pt-4 border-t border-black/5 dark:border-white/5">
+              <div className="flex justify-center">
+                <Turnstile
+                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAAASv99r4w7u-f88J'}
+                  onSuccess={(token) => setCaptchaToken(token)}
+                  options={{
+                    theme: 'auto',
+                    size: 'normal',
+                  }}
+                />
               </div>
             </div>
 
