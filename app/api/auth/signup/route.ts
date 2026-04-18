@@ -45,10 +45,10 @@ export async function POST(request: Request) {
     const { email, password, name } = validatedData.data;
     
     // Check for required environment variables early
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+    const { getSupabaseConfig } = await import('@/lib/supabase/server');
+    const { url, anonKey } = getSupabaseConfig();
 
-    if (!url || !anonKey) {
+    if (!url || !anonKey || url.includes('TODO') || anonKey.includes('TODO')) {
       const missing = [];
       if (!url) missing.push('SUPABASE_URL');
       if (!anonKey) missing.push('SUPABASE_ANON_KEY');

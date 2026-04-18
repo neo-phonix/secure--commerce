@@ -10,23 +10,47 @@ export const getEnv = (keys: string[]) => {
     if (process.env[key]) return process.env[key];
   }
 
-  // 2. Case-insensitive and partial match (fallback for malformed labels)
-  const allKeys = Object.keys(process.env);
-  for (const search of keys) {
-    const found = allKeys.find(k => {
-      const uk = k.toUpperCase();
-      const us = search.toUpperCase();
-      return uk === us || uk.includes(us) || us.includes(uk);
-    });
-    if (found && process.env[found]) return process.env[found];
+  // 2. Exact match on normalized keys
+  const allEntries = Object.entries(process.env);
+  const normalizedKeys = keys.map(k => k.toUpperCase().replace(/^NEXT_PUBLIC_/, ''));
+  
+  for (const [key, value] of allEntries) {
+    const uk = key.toUpperCase().replace(/^NEXT_PUBLIC_/, '');
+    if (normalizedKeys.includes(uk)) return value;
   }
+
+  // 3. Substring match
+  for (const search of keys) {
+    const us = search.toUpperCase().replace(/^NEXT_PUBLIC_/, '');
+    for (const [key, value] of allEntries) {
+      const uk = key.toUpperCase();
+      if (uk.includes(us) || us.includes(uk)) return value;
+    }
+  }
+
   return undefined;
 };
 
 export const getSupabaseConfig = () => {
   const url = getEnv(['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_URL', 'URL']);
   const anonKey = getEnv(['NEXT_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_ANON_KEY', 'ANON_KEY']);
-  const serviceRoleKey = getEnv(['SUPABASE_SERVICE_ROLE_KEY', 'SERVICE_ROLE_KEY', 'SERVICE_KEY', 'SUPABASE_SERVICE_KEY']);
+  let serviceRoleKey = getEnv(['SUPABASE_SERVICE_ROLE_KEY', 'SERVICE_ROLE_KEY', 'SERVICE_KEY', 'SUPABASE_SERVICE_KEY']);
+
+  // FINAL FAILSAFE: Look for ANY key that contains BOTH 'SERVICE' and 'ROLE' and 'KEY'
+  if (!serviceRoleKey) {
+    const allKeys = Object.keys(process.env);
+    const desperateMatch = allKeys.find(k => {
+      const uk = k.toUpperCase();
+      return uk.includes('SERVICE') && uk.includes('ROLE') && uk.includes('KEY');
+    });
+    if (desperateMatch) serviceRoleKey = process.env[desperateMatch];
+  }
+
+  if (!url || !anonKey || !serviceRoleKey) {
+    const envKeys = Object.keys(process.env);
+    console.log('CLIENT CONFIG CHECK - Env keys:', envKeys);
+    console.log('CLIENT CONFIG CHECK - Found URL:', !!url, 'AnonKey:', !!anonKey, 'ServiceRole:', !!serviceRoleKey);
+  }
 
   return { url, anonKey, serviceRoleKey };
 };

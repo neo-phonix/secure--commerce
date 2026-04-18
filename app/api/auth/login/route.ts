@@ -48,11 +48,15 @@ export async function POST(request: Request) {
       console.error('Missing Supabase configuration:', missing);
       
       // DIAGNOSTIC - Helps find malformed/cut-off labels
-      const envKeys = Object.keys(process.env).filter(k => k.includes('SUPABASE') || k.includes('SERVICE') || k.includes('KEY'));
+      const envKeys = Object.keys(process.env);
+      const supabaseRelated = envKeys.filter(k => k.toUpperCase().includes('SUPABASE') || k.toUpperCase().includes('SERVICE') || k.toUpperCase().includes('KEY'));
       
+      console.log('All available env keys:', envKeys);
+      console.log('Supabase related keys:', supabaseRelated);
+
       return NextResponse.json({ 
         error: 'Supabase configuration is incomplete.',
-        details: `Missing: ${missing.join(', ')}. Found keys: [${envKeys.join(', ')}]. Please check your environment variables in settings.`
+        details: `Missing: ${missing.join(', ')}. Available keys: [${supabaseRelated.join(', ')}]. All keys count: ${envKeys.length}. Please ensure SUPABASE_SERVICE_ROLE_KEY is set in settings.`
       }, { status: 500 });
     }
     

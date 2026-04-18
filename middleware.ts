@@ -92,8 +92,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // 3. Update Supabase session
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+  // We handle env check inside updateSession or here
+  const { getSupabaseConfig } = await import('@/lib/supabase/server');
+  const { url, anonKey } = getSupabaseConfig();
 
   if (!url || !anonKey || url.includes('TODO') || anonKey.includes('TODO')) {
     console.error('Supabase configuration is missing or invalid in middleware')
