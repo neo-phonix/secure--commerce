@@ -78,8 +78,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                       <Chatbot />
                       <Toaster 
                         position="bottom-right"
+                        containerStyle={{ zIndex: 999999 }}
                         toastOptions={{
-                          className: '!flex !flex-col !items-start gap-3 min-w-[280px] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-800 shadow-lg rounded-xl p-5 text-sm z-[99999]',
+                          className: '!flex !flex-col !items-start gap-3 min-w-[280px] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-800 shadow-lg rounded-xl p-5 text-sm',
                           duration: 3000,
                         }}
                       />

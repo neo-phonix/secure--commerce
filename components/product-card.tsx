@@ -62,12 +62,17 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none hover:-translate-y-1">
+    <div className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none hover:-translate-y-1 relative block">
+      {/* Invisible link overlay covering the entire card, placed below interactive elements */}
       <Link 
         href={`/products/${product.id}`}
         onClick={() => addToRecentlyViewed(product)}
-        className="block relative aspect-square overflow-hidden"
+        className="absolute inset-0 z-0"
       >
+        <span className="sr-only">View {product.name}</span>
+      </Link>
+      
+      <div className="block relative aspect-square overflow-hidden">
         <Image
           src={product.image_url || `https://picsum.photos/seed/${product.id}/800/800`}
           alt={product.name}
@@ -95,7 +100,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <button
             onClick={handleWishlistClick}
             className={cn(
-              "p-2 rounded-xl backdrop-blur-md border transition-all duration-300",
+              "p-2 rounded-xl backdrop-blur-md border transition-all duration-300 relative z-10",
               isWishlisted 
                 ? "bg-red-500 border-red-500 text-white" 
                 : "bg-white/80 dark:bg-slate-900/80 border-white/20 text-slate-600 dark:text-slate-300 hover:bg-emerald-500 hover:border-emerald-500 hover:text-white"
@@ -103,13 +108,17 @@ export default function ProductCard({ product }: ProductCardProps) {
           >
             <Heart className={cn("w-5 h-5", isWishlisted && "fill-current")} />
           </button>
-          <button className="p-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/20 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-emerald-500 hover:border-emerald-500 hover:text-white transition-all duration-300">
+          <Link 
+            href={`/products/${product.id}`}
+            onClick={() => addToRecentlyViewed(product)}
+            className="p-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/20 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-emerald-500 hover:border-emerald-500 hover:text-white transition-all duration-300 relative z-10 inline-block"
+          >
             <Eye className="w-5 h-5" />
-          </button>
+          </Link>
         </div>
 
         {/* Add to Cart Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+        <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-10">
           <button
             onClick={handleAddToCart}
             disabled={product.inventory_count === 0 || isAdded}
@@ -142,7 +151,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             )}
           </button>
         </div>
-      </Link>
+      </div>
 
       <div className="p-5">
         <div className="flex items-center justify-between mb-2">
@@ -156,7 +165,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <Link 
           href={`/products/${product.id}`}
           onClick={() => addToRecentlyViewed(product)}
-          className="block mb-2"
+          className="block mb-2 relative z-10"
         >
           <h3 className="font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-emerald-500 transition-colors">
             {product.name}
