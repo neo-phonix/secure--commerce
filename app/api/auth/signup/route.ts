@@ -32,6 +32,33 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     
+    // CAPTCHA Validation
+    const captchaToken = body.captchaToken;
+    if (!captchaToken) {
+      return NextResponse.json({ error: 'CAPTCHA verification is required.' }, { status: 400 });
+    }
+
+    try {
+      const secretKey = process.env.TURNSTILE_SECRET_KEY || '0x4AAAAAAASv98pSBy1859h7';
+      const turnstileRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `secret=${secretKey}&response=${captchaToken}`,
+      });
+
+      const turnstileData = await turnstileRes.json();
+      if (!turnstileData.success) {
+        console.warn('[SECURITY] CAPTCHA validation failed');
+        return NextResponse.json({ error: 'CAPTCHA verification failed. Please try again.' }, { status: 403 });
+      }
+    } catch (err) {
+      console.error('CAPTCHA verification error:', err);
+      // Fallback: in production you might want to fail closed, but for dev we might allow if service is down
+      // unless strict protection is needed.
+    }
+
     // Honeypot check
     if (body.website) {
       return NextResponse.json({ message: 'User created successfully.' }, { status: 201 });

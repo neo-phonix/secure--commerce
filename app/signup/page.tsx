@@ -8,6 +8,7 @@ import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
 import { Spinner } from '@/components/ui/spinner';
 import { useLanguage } from '@/context/language-context';
+import Turnstile from 'react-turnstile';
 
 export default function Signup() {
   const [name, setName] = useState('');
@@ -15,6 +16,7 @@ export default function Signup() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [honeypot, setHoneypot] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
   const [loading, setLoading] = useState(false);
   const { t } = useLanguage();
   const router = useRouter();
@@ -32,7 +34,7 @@ export default function Signup() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, website: honeypot }),
+        body: JSON.stringify({ name, email, password, website: honeypot, captchaToken }),
       });
 
       let data;
@@ -213,6 +215,13 @@ export default function Signup() {
                 onChange={(e) => setHoneypot(e.target.value)}
                 tabIndex={-1}
                 autoComplete="off"
+              />
+            </div>
+
+            <div className="flex justify-center">
+              <Turnstile
+                sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAAASv99r4w7u-f88J'}
+                onVerify={(token) => setCaptchaToken(token)}
               />
             </div>
 
