@@ -36,14 +36,20 @@ export async function POST(request: Request) {
     const { email, password } = validatedData.data;
 
     // Check for required environment variables early
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('Missing Supabase configuration:', {
-        url: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-        anonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-        serviceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
-      });
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
+
+    if (!url || !anonKey || !serviceRoleKey) {
+      const missing = [];
+      if (!url) missing.push('SUPABASE_URL');
+      if (!anonKey) missing.push('SUPABASE_ANON_KEY');
+      if (!serviceRoleKey) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+      
+      console.error('Missing Supabase configuration:', missing);
       return NextResponse.json({ 
-        error: 'Supabase configuration is missing. Please set up your environment variables.' 
+        error: 'Supabase configuration is incomplete.',
+        details: `Missing: ${missing.join(', ')}. Please check your environment variables in settings.`
       }, { status: 500 });
     }
     

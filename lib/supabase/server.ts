@@ -4,11 +4,14 @@ import { cookies } from 'next/headers';
 export const createClient = async () => {
   const cookieStore = await cookies();
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
   if (!url || !anonKey || url.includes('TODO') || anonKey.includes('TODO')) {
-    throw new Error('Supabase configuration is missing or invalid. Please check your environment variables.');
+    const missing = [];
+    if (!url) missing.push('URL');
+    if (!anonKey) missing.push('Anon Key');
+    throw new Error(`Supabase configuration is incomplete. Missing: ${missing.join(', ')}. Please check your environment variables.`);
   }
 
   return createServerClient(
@@ -42,11 +45,14 @@ export const createClient = async () => {
 };
 
 export const createAdminClient = async () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
 
   if (!url || !serviceRoleKey || url.includes('TODO') || serviceRoleKey.includes('TODO')) {
-    throw new Error('Supabase admin configuration is missing or invalid. Please check your environment variables.');
+    const missing = [];
+    if (!url) missing.push('URL');
+    if (!serviceRoleKey) missing.push('Service Role Key');
+    throw new Error(`Supabase admin configuration is incomplete. Missing: ${missing.join(', ')}. Please check your environment variables.`);
   }
 
   return createServerClient(
