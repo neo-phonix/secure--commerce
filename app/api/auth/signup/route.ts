@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server';
 import rateLimit from '@/lib/rate-limit';
 import { z } from 'zod';
 import validator from 'validator';
-import { isDisposableEmail } from '@/lib/security/disposable-emails';
 
 const signupSchema = z.object({
   email: z.string().email().transform(val => validator.normalizeEmail(val) || val),
@@ -34,10 +33,7 @@ export async function POST(request: Request) {
     
     // Honeypot check
     if (body.website) {
-      console.log('[SECURITY] Bot trapped in honeypot');
-      return NextResponse.json({ 
-        message: 'User created successfully.'
-      }, { status: 201 });
+      return NextResponse.json({ message: 'User created successfully.' }, { status: 201 });
     }
 
     const validatedData = signupSchema.safeParse(body);
@@ -47,14 +43,6 @@ export async function POST(request: Request) {
     }
 
     const { email, password, name } = validatedData.data;
-
-    // Disposable email check
-    if (isDisposableEmail(email)) {
-      console.warn(`[SECURITY] Blocked disposable email signup attempt: ${email}`);
-      return NextResponse.json({ 
-        error: 'Temporary email addresses are not allowed.'
-      }, { status: 400 });
-    }
     
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       return NextResponse.json({ 

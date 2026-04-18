@@ -16,7 +16,6 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [honeypot, setHoneypot] = useState('');
   const [loading, setLoading] = useState(false);
-
   const { t } = useLanguage();
   const router = useRouter();
 
