@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     // CAPTCHA Validation
     const captchaToken = body.captchaToken;
     if (!captchaToken) {
-      return NextResponse.json({ error: 'CAPTCHA verification is required.' }, { status: 400 });
+      return NextResponse.json({ error: 'Please complete the security verification (CAPTCHA).' }, { status: 400 });
     }
 
     try {

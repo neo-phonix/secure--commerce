@@ -8,7 +8,7 @@ import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
 import { Spinner } from '@/components/ui/spinner';
 import { useLanguage } from '@/context/language-context';
-import Turnstile from 'react-turnstile';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 export default function Signup() {
   const [name, setName] = useState('');
@@ -218,11 +218,20 @@ export default function Signup() {
               />
             </div>
 
-            <div className="flex justify-center">
-              <Turnstile
-                sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAAASv99r4w7u-f88J'}
-                onVerify={(token) => setCaptchaToken(token)}
-              />
+            <div className="space-y-4 pt-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-center text-black/40 dark:text-white/40">
+                Security Verification
+              </p>
+              <div className="flex justify-center min-h-[65px] bg-slate-50 dark:bg-slate-800/50 rounded-2xl items-center border border-dashed border-black/10 dark:border-white/10">
+                <Turnstile
+                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAAASv99r4w7u-f88J'}
+                  onSuccess={(token) => setCaptchaToken(token)}
+                  options={{
+                    theme: 'light',
+                    size: 'normal',
+                  }}
+                />
+              </div>
             </div>
 
             <button
